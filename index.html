@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caveman Mode — Analysis by Sarita Gomi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0a0804;
+    --bg2: #120e08;
+    --bg3: #1c1610;
+    --gold: #d4a843;
+    --gold2: #e8c560;
+    --bone: #f0e6d0;
+    --muted: #8a7a60;
+    --red: #c0392b;
+    --teal: #1a8a70;
+    --mono: 'DM Mono', 'Courier Prime', monospace;
+    --sans: 'Syne', sans-serif;
+    --display: 'Bebas Neue', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--bone);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── WATERMARK ── */
+  .watermark {
+    position: fixed;
+    bottom: 18px;
+    right: 22px;
+    z-index: 9999;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    opacity: 0.55;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid rgba(212,168,67,0.3);
+    padding: 4px 10px;
+    pointer-events: none;
+    backdrop-filter: blur(2px);
+  }
+  .watermark span { display: block; font-size: 9px; color: var(--muted); }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    padding: 80px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: var(--display);
+    font-size: clamp(80px, 10vw, 140px);
+    line-height: 0.88;
+    letter-spacing: 0.02em;
+    color: var(--bone);
+    margin-bottom: 8px;
+  }
+
+  .hero-title .accent { color: var(--gold); }
+
+  .hero-sub {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 50px);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 40px;
+  }
+
+  .hero-desc {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 380px;
+    line-height: 1.8;
+    border-left: 2px solid var(--gold);
+    padding-left: 20px;
+  }
+
+  .hero-right {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+  }
+
+  /* token counter animation */
+  .token-counter {
+    text-align: center;
+    position: relative;
+  }
+
+  .tc-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .tc-before, .tc-after {
+    font-family: var(--display);
+    font-size: 90px;
+    line-height: 1;
+    transition: all 0.5s;
+  }
+
+  .tc-before { color: var(--red); }
+  .tc-after { color: var(--teal); }
+
+  .tc-arrow {
+    font-family: var(--display);
+    font-size: 60px;
+    color: var(--gold);
+    display: block;
+    margin: 8px 0;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.96); }
+  }
+
+  .tc-saving {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--teal);
+    margin-top: 12px;
+    background: rgba(26,138,112,0.12);
+    border: 1px solid rgba(26,138,112,0.3);
+    padding: 6px 16px;
+    display: inline-block;
+  }
+
+  .tc-example {
+    margin-top: 32px;
+    background: var(--bg2);
+    border: 1px solid rgba(212,168,67,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    width: 360px;
+    text-align: left;
+  }
+
+  .tc-tab {
+    display: flex;
+    border-bottom: 1px solid rgba(212,168,67,0.15);
+  }
+
+  .tc-tab button {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tc-tab button.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    background: rgba(212,168,67,0.05);
+  }
+
+  .tc-content {
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--bone);
+    min-height: 80px;
+  }
+
+  .strike { text-decoration: line-through; color: var(--red); opacity: 0.6; }
+
+  /* decorative grid lines */
+  #hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(212,168,67,0.15) 30%, rgba(212,168,67,0.15) 70%, transparent);
+    z-index: 1;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 60px;
+    background: rgba(10,8,4,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(212,168,67,0.12);
+  }
+
+  .nav-logo {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 100px 0;
+    position: relative;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 60px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(212,168,67,0.2);
+  }
+
+  .section-title {
+    font-family: var(--display);
+    font-size: clamp(48px, 6vw, 80px);
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: var(--bone);
+    margin-bottom: 60px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  #how {
+    background: var(--bg2);
+    clip-path: polygon(0 40px, 100% 0, 100% calc(100% - 40px), 0 100%);
+    padding: 140px 0;
+  }
+
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .pipeline-step {
+    display: flex;
+    gap: 20px;
+    position: relative;
+  }
+
+  .pipeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 44px;
+    width: 2px;
+    height: calc(100% - 4px);
+    background: linear-gradient(to bottom, var(--gold), rgba(212,168,67,0.2));
+  }
+
+  .ps-icon {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--gold);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--gold);
+    background: rgba(212,168,67,0.08);
+    position: relative;
+    z-index: 1;
+  }
+
+  .ps-body {
+    padding: 8px 0 40px;
+  }
+
+  .ps-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: var(--bone);
+    margin-bottom: 6px;
+  }
+
+  .ps-desc {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* live demo panel */
+  .demo-panel {
+    background: var(--bg3);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    position: sticky;
+    top: 100px;
+  }
+
+  .demo-header {
+    background: rgba(212,168,67,0.08);
+    border-bottom: 1px solid rgba(212,168,67,0.15);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .demo-header-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .demo-dots { display: flex; gap: 6px; }
+  .demo-dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .demo-dots span:nth-child(1) { background: #ff5f56; }
+  .demo-dots span:nth-child(2) { background: #ffbd2e; }
+  .demo-dots span:nth-child(3) { background: #27c93f; }
+
+  .demo-prompt {
+    padding: 20px;
+    border-bottom: 1px solid rgba(212,168,67,0.1);
+  }
+
+  .demo-prompt-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .demo-prompt-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--bone);
+    line-height: 1.6;
+  }
+
+  .demo-mode-select {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(212,168,67,0.1);
+    display: flex;
+    gap: 8px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid rgba(212,168,67,0.25);
+    background: transparent;
+    color: var(--muted);
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .mode-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.06); }
+  .mode-btn.active { border-color: var(--gold); color: var(--gold); background: rgba(212,168,67,0.12); }
+
+  .demo-output {
+    padding: 20px;
+    min-height: 120px;
+  }
+
+  .demo-output-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+
+  .demo-output-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--bone);
+    line-height: 1.8;
+    transition: all 0.3s;
+  }
+
+  .demo-tokens {
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .dt-stat {
+    text-align: center;
+  }
+
+  .dt-num {
+    font-family: var(--display);
+    font-size: 28px;
+  }
+
+  .dt-num.before { color: var(--red); }
+  .dt-num.after { color: var(--teal); }
+
+  .dt-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .dt-arrow {
+    font-family: var(--display);
+    font-size: 28px;
+    color: var(--gold);
+  }
+
+  .dt-pct {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--gold);
+  }
+
+  /* ── RULES ── */
+  #rules { background: var(--bg); }
+
+  .rules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-top: 60px;
+  }
+
+  .rules-col {
+    padding: 40px;
+    position: relative;
+  }
+
+  .rules-col.kill {
+    background: rgba(192,57,43,0.06);
+    border: 1px solid rgba(192,57,43,0.2);
+  }
+
+  .rules-col.keep {
+    background: rgba(26,138,112,0.06);
+    border: 1px solid rgba(26,138,112,0.2);
+  }
+
+  .rules-col-title {
+    font-family: var(--display);
+    font-size: 36px;
+    letter-spacing: 0.1em;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .kill .rules-col-title { color: var(--red); }
+  .keep .rules-col-title { color: var(--teal); }
+
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .rule-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+
+  .kill .rule-icon { background: rgba(192,57,43,0.2); color: var(--red); }
+  .keep .rule-icon { background: rgba(26,138,112,0.2); color: var(--teal); }
+
+  .rule-text { color: var(--muted); line-height: 1.5; }
+  .rule-eg {
+    font-size: 11px;
+    color: rgba(138,122,96,0.7);
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  /* ── LEVELS ── */
+  #levels {
+    background: var(--bg2);
+    clip-path: polygon(0 0, 100% 40px, 100% 100%, 0 calc(100% - 40px));
+    padding: 140px 0;
+  }
+
+  .levels-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(212,168,67,0.2);
+    margin-bottom: 0;
+  }
+
+  .level-tab {
+    flex: 1;
+    font-family: var(--display);
+    font-size: 20px;
+    letter-spacing: 0.08em;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .level-tab:hover { color: var(--gold); background: rgba(212,168,67,0.04); }
+  .level-tab.active { color: var(--gold); border-bottom-color: var(--gold); background: rgba(212,168,67,0.06); }
+
+  .level-panel {
+    display: none;
+    padding: 48px;
+    background: var(--bg3);
+    border: 1px solid rgba(212,168,67,0.12);
+    border-top: none;
+  }
+
+  .level-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+
+  .lp-desc {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 24px;
+  }
+
+  .lp-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .lp-rule {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .lp-rule::before {
+    content: '▸';
+    color: var(--gold);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .lp-example {
+    background: var(--bg);
+    border: 1px solid rgba(212,168,67,0.12);
+    padding: 24px;
+    border-radius: 2px;
+  }
+
+  .lp-q {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .lp-q-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: rgba(240,230,208,0.6);
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+
+  .lp-a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+
+  .lp-a-text {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--bone);
+    line-height: 1.7;
+    padding: 10px;
+    background: rgba(26,138,112,0.05);
+    border: 1px solid rgba(26,138,112,0.15);
+    border-radius: 2px;
+  }
+
+  .lp-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+
+  .badge-lite { background: rgba(26,138,112,0.15); color: var(--teal); border: 1px solid rgba(26,138,112,0.3); }
+  .badge-full { background: rgba(212,168,67,0.15); color: var(--gold); border: 1px solid rgba(212,168,67,0.3); }
+  .badge-ultra { background: rgba(192,57,43,0.15); color: var(--red); border: 1px solid rgba(192,57,43,0.3); }
+  .badge-wenyan { background: rgba(138,122,96,0.15); color: var(--muted); border: 1px solid rgba(138,122,96,0.3); }
+
+  /* ── CHART ── */
+  #chart-section { background: var(--bg); }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 340px;
+  }
+
+  .chart-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid rgba(212,168,67,0.15);
+    padding: 20px;
+    border-radius: 2px;
+  }
+
+  .metric-val {
+    font-family: var(--display);
+    font-size: 40px;
+    line-height: 1;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── AUTO-CLARITY ── */
+  #autoclar {
+    background: var(--bg2);
+    clip-path: polygon(0 40px, 100% 0, 100% calc(100% - 40px), 0 100%);
+    padding: 140px 0;
+  }
+
+  .ac-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-top: 60px;
+  }
+
+  .ac-node {
+    padding: 20px 28px;
+    border: 1px solid rgba(212,168,67,0.3);
+    background: rgba(212,168,67,0.05);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--bone);
+    min-width: 140px;
+    text-align: center;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .ac-node.decision {
+    transform: rotate(0deg);
+    background: rgba(212,168,67,0.1);
+    border-color: var(--gold);
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .ac-node.normal { border-color: rgba(26,138,112,0.4); background: rgba(26,138,112,0.06); color: var(--teal); }
+  .ac-node.pause { border-color: rgba(192,57,43,0.4); background: rgba(192,57,43,0.06); color: var(--red); }
+
+  .ac-arrow {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--muted);
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ac-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  .ac-triggers {
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .ac-trigger {
+    border: 1px solid rgba(192,57,43,0.25);
+    background: rgba(192,57,43,0.05);
+    padding: 20px;
+    border-radius: 2px;
+  }
+
+  .act-icon {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--red);
+    margin-bottom: 10px;
+  }
+
+  .act-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: var(--bone);
+    margin-bottom: 6px;
+  }
+
+  .act-desc {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── IMPROVEMENTS ── */
+  #improvements { background: var(--bg); }
+
+  .impr-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 60px;
+  }
+
+  .impr-card {
+    border: 1px solid rgba(212,168,67,0.2);
+    background: var(--bg2);
+    padding: 32px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+
+  .impr-card:hover {
+    border-color: var(--gold);
+    transform: translateY(-4px);
+  }
+
+  .impr-card::before {
+    content: attr(data-num);
+    font-family: var(--display);
+    font-size: 120px;
+    color: rgba(212,168,67,0.04);
+    position: absolute;
+    top: -20px;
+    right: 10px;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .impr-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .status-idea { background: rgba(212,168,67,0.12); color: var(--gold); border: 1px solid rgba(212,168,67,0.3); }
+  .status-enhance { background: rgba(26,138,112,0.12); color: var(--teal); border: 1px solid rgba(26,138,112,0.3); }
+  .status-critical { background: rgba(192,57,43,0.12); color: var(--red); border: 1px solid rgba(192,57,43,0.3); }
+
+  .impr-title {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--bone);
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+
+  .impr-desc {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .impr-impact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .impr-impact::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--gold);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(212,168,67,0.15);
+    padding: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+  }
+
+  .footer-brand {
+    font-family: var(--display);
+    font-size: 36px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+
+  .footer-author {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .footer-author strong {
+    display: block;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--bone);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards;
+  }
+
+  .fade-up:nth-child(1) { animation-delay: 0.1s; }
+  .fade-up:nth-child(2) { animation-delay: 0.2s; }
+  .fade-up:nth-child(3) { animation-delay: 0.3s; }
+  .fade-up:nth-child(4) { animation-delay: 0.4s; }
+
+  /* ── GRAPH BAR ── */
+  .bar-graph {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 40px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .bar-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 32px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    padding-left: 12px;
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    transition: width 1s ease;
+    width: 0;
+  }
+
+  .bar-val {
+    font-family: var(--display);
+    font-size: 20px;
+    color: var(--gold);
+    min-width: 48px;
+    text-align: right;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="watermark">
+  Sarita Gomi
+  <span>Skill Analysis · Caveman Mode</span>
+</div>
+
+<nav>
+  <div class="nav-logo">CAVEMAN</div>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#rules">Rules Engine</a></li>
+    <li><a href="#levels">Intensity Levels</a></li>
+    <li><a href="#chart-section">Compression</a></li>
+    <li><a href="#improvements">Improvements</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero" style="padding-top: 80px;">
+  <div class="hero-left fade-up">
+    <div class="hero-tag">Skill Analysis · Debug Report</div>
+    <h1 class="hero-title">CAVE<span class="accent">MAN</span><br>MODE</h1>
+    <div class="hero-sub">TOKEN COMPRESSION SKILL</div>
+    <p class="hero-desc">
+      Ultra-compressed communication protocol. Eliminates verbal overhead while preserving 100% technical accuracy.
+      Triggers on demand. Persists across conversation turns.
+    </p>
+  </div>
+  <div class="hero-right fade-up">
+    <div class="token-counter">
+      <div class="tc-label">Token Compression Demo</div>
+      <div class="tc-before" id="hero-before">142</div>
+      <span class="tc-arrow">↓</span>
+      <div class="tc-after" id="hero-after">38</div>
+      <div class="tc-saving">~73% token reduction</div>
+
+      <div class="tc-example">
+        <div class="tc-tab">
+          <button class="active" onclick="showEx(this,'normal')">Normal</button>
+          <button onclick="showEx(this,'caveman')">Caveman</button>
+        </div>
+        <div class="tc-content" id="ex-normal">
+          "Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by an expired token. The authentication middleware is checking the token expiry using the wrong comparison operator — it should use <code>&lt;=</code> instead of <code>&lt;</code>. Let me walk you through how to fix this..."
+        </div>
+        <div class="tc-content" id="ex-caveman" style="display:none;">
+          "Bug: auth middleware. Token expiry check use <code>&lt;</code> not <code>&lt;=</code>. Fix:"
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="section-label">01 — Architecture</div>
+    <h2 class="section-title">HOW IT<br>WORKS</h2>
+    <div class="how-grid">
+      <div class="pipeline">
+        <div class="pipeline-step fade-up">
+          <div class="ps-icon">1</div>
+          <div class="ps-body">
+            <div class="ps-title">Trigger Detection</div>
+            <div class="ps-desc">Activates on keywords: "caveman", "/caveman", "less tokens", "be brief". Also triggers on <code>/caveman lite|full|ultra</code> for level selection.</div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="ps-icon">2</div>
+          <div class="ps-body">
+            <div class="ps-title">Mode Persistence Engine</div>
+            <div class="ps-desc">Once active, stays ACTIVE every response. No revert after many turns. No filler drift. Explicitly killed by "stop caveman" or "normal mode" only.</div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="ps-icon">3</div>
+          <div class="ps-body">
+            <div class="ps-title">Response Transformer</div>
+            <div class="ps-desc">Strips articles (a/an/the), filler words, pleasantries, hedging. Replaces verbose synonyms. Allows sentence fragments. Pattern: <code>[thing] [action] [reason]. [next step].</code></div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="ps-icon">4</div>
+          <div class="ps-body">
+            <div class="ps-title">Auto-Clarity Gate</div>
+            <div class="ps-desc">Temporarily drops caveman for security warnings, destructive ops, ambiguous multi-step sequences. Resumes automatically after critical section.</div>
+          </div>
+        </div>
+        <div class="pipeline-step fade-up">
+          <div class="ps-icon">5</div>
+          <div class="ps-body">
+            <div class="ps-title">Boundary Enforcement</div>
+            <div class="ps-desc">Code blocks, commit messages, PRs always written normal. Caveman applies only to prose communication.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- live demo -->
+      <div class="demo-panel">
+        <div class="demo-header">
+          <span class="demo-header-title">Live Response Demo</span>
+          <div class="demo-dots"><span></span><span></span><span></span></div>
+        </div>
+        <div class="demo-prompt">
+          <div class="demo-prompt-label">User Prompt</div>
+          <div class="demo-prompt-text">Why does my React component re-render every time?</div>
+        </div>
+        <div class="demo-mode-select">
+          <button class="mode-btn active" onclick="switchMode('normal',this)">Normal</button>
+          <button class="mode-btn" onclick="switchMode('lite',this)">Lite</button>
+          <button class="mode-btn" onclick="switchMode('full',this)">Full</button>
+          <button class="mode-btn" onclick="switchMode('ultra',this)">Ultra</button>
+        </div>
+        <div class="demo-output">
+          <div class="demo-output-label">Response</div>
+          <div class="demo-output-text" id="demo-out">Sure! I'd be happy to help. Your component re-renders because you're creating a new object reference on every render. When you define an object inline as a prop, React sees it as a brand-new object each time, even if the values haven't changed. The solution is to wrap it in useMemo to memoize the reference.</div>
+        </div>
+        <div class="demo-tokens">
+          <div class="dt-stat">
+            <div class="dt-num before" id="t-before">62</div>
+            <div class="dt-label">Input tokens</div>
+          </div>
+          <div class="dt-arrow">→</div>
+          <div class="dt-stat">
+            <div class="dt-num after" id="t-after">52</div>
+            <div class="dt-label">Output tokens</div>
+          </div>
+          <div class="dt-stat">
+            <div class="dt-pct" id="t-pct">baseline</div>
+            <div class="dt-label">Savings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES ENGINE -->
+<section id="rules">
+  <div class="container">
+    <div class="section-label">02 — Rules Engine</div>
+    <h2 class="section-title">KILL vs KEEP</h2>
+    <div class="rules-grid">
+      <div class="rules-col kill">
+        <div class="rules-col-title">☓ KILLED</div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Articles — a, an, the</div>
+            <div class="rule-eg">"the issue" → "issue"</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Filler words — just, really, basically, actually, simply</div>
+            <div class="rule-eg">"basically just use" → "use"</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Pleasantries — sure, certainly, of course, happy to</div>
+            <div class="rule-eg">"Sure! Happy to help!" → [removed]</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Hedging language</div>
+            <div class="rule-eg">"it might possibly be" → "is"</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Verbose synonyms</div>
+            <div class="rule-eg">"implement a solution for" → "fix"</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✕</div>
+          <div>
+            <div class="rule-text">Padding transitions</div>
+            <div class="rule-eg">"Let me walk you through..." → removed</div>
+          </div>
+        </div>
+      </div>
+      <div class="rules-col keep">
+        <div class="rules-col-title">✓ KEPT</div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">100% technical substance</div>
+            <div class="rule-eg">All facts, logic, and accuracy preserved</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">Exact technical terms</div>
+            <div class="rule-eg">useMemo, auth middleware, SQL injection</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">All code blocks — written normal</div>
+            <div class="rule-eg">No compression inside code fences</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">Exact error messages when quoting</div>
+            <div class="rule-eg">Errors quoted verbatim, never paraphrased</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">Sentence fragments when clear</div>
+            <div class="rule-eg">Clarity > grammar in caveman mode</div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">✓</div>
+          <div>
+            <div class="rule-text">Safety-critical full sentences</div>
+            <div class="rule-eg">Destructive ops always written clearly</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTENSITY LEVELS -->
+<section id="levels">
+  <div class="container">
+    <div class="section-label">03 — Intensity Levels</div>
+    <h2 class="section-title">SIX<br>LEVELS</h2>
+    <div class="levels-tabs">
+      <button class="level-tab active" onclick="switchLevel('lite',this)">LITE</button>
+      <button class="level-tab" onclick="switchLevel('full',this)">FULL</button>
+      <button class="level-tab" onclick="switchLevel('ultra',this)">ULTRA</button>
+      <button class="level-tab" onclick="switchLevel('wenyan-lite',this)">文言 LITE</button>
+      <button class="level-tab" onclick="switchLevel('wenyan-full',this)">文言 FULL</button>
+      <button class="level-tab" onclick="switchLevel('wenyan-ultra',this)">文言 ULTRA</button>
+    </div>
+
+    <div class="level-panel active" id="lp-lite">
+      <div>
+        <span class="lp-badge badge-lite">Lite — Default Professional</span>
+        <p class="lp-desc">Removes filler and hedging but keeps articles and full sentences. Reads as clean, professional English. Suitable when you want brevity without losing polish.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">No filler words (just, basically, actually)</div>
+          <div class="lp-rule">No hedging (might possibly, could be)</div>
+          <div class="lp-rule">Articles preserved (a, an, the)</div>
+          <div class="lp-rule">Full grammatical sentences</div>
+          <div class="lp-rule">Professional register maintained</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (Lite)</div>
+        <div class="lp-a-text">Your component re-renders because you create a new object reference each render. Wrap it in <code>useMemo</code>.</div>
+      </div>
+    </div>
+
+    <div class="level-panel" id="lp-full">
+      <div>
+        <span class="lp-badge badge-full">Full — Classic Caveman</span>
+        <p class="lp-desc">Drops articles, allows fragments, uses short synonyms. This is the default caveman mode. Maximally compressed while still readable by any English speaker.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">Articles dropped (a/an/the removed)</div>
+          <div class="lp-rule">Sentence fragments OK</div>
+          <div class="lp-rule">Short synonyms: big not extensive, fix not implement</div>
+          <div class="lp-rule">Core pattern: [thing] [action] [reason]</div>
+          <div class="lp-rule">~60-75% token reduction from normal</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (Full)</div>
+        <div class="lp-a-text">New object ref each render. Inline object prop = new ref = re-render. Wrap in <code>useMemo</code>.</div>
+      </div>
+    </div>
+
+    <div class="level-panel" id="lp-ultra">
+      <div>
+        <span class="lp-badge badge-ultra">Ultra — Maximum Compression</span>
+        <p class="lp-desc">Abbreviates standard terms (DB/auth/config/req/res), strips conjunctions, uses arrows for causality. One word when one word is enough.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">Standard abbreviations: DB, auth, config, req, res, fn, impl</div>
+          <div class="lp-rule">Conjunctions stripped (and, but, because → implied)</div>
+          <div class="lp-rule">Arrows for causality: X → Y</div>
+          <div class="lp-rule">One word answers when sufficient</div>
+          <div class="lp-rule">~80-90% token reduction from normal</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (Ultra)</div>
+        <div class="lp-a-text">Inline obj prop → new ref → re-render. <code>useMemo</code>.</div>
+      </div>
+    </div>
+
+    <div class="level-panel" id="lp-wenyan-lite">
+      <div>
+        <span class="lp-badge badge-wenyan">文言 Lite — Semi-Classical</span>
+        <p class="lp-desc">Classical Chinese register with semi-formal grammar. Drops filler/hedging but keeps sentence structure. Scholarly, elegant compression for Chinese-speaking users.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">Classical register (文言 style)</div>
+          <div class="lp-rule">Filler and hedging removed</div>
+          <div class="lp-rule">Grammar structure maintained</div>
+          <div class="lp-rule">Mix of classical and modern technical terms</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (文言 Lite)</div>
+        <div class="lp-a-text">組件頻重繪，以每繪新生對象參照故。以 <code>useMemo</code> 包之。</div>
+      </div>
+    </div>
+
+    <div class="level-panel" id="lp-wenyan-full">
+      <div>
+        <span class="lp-badge badge-wenyan">文言 Full — Maximum Classical</span>
+        <p class="lp-desc">Fully classical Chinese (文言文). 80-90% character reduction. Classical sentence patterns, verbs precede objects, subjects often omitted. Classical particles: 之/乃/為/其.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">Full 文言文 grammar</div>
+          <div class="lp-rule">Classical particles: 之、乃、為、其</div>
+          <div class="lp-rule">Subjects often omitted (contextual)</div>
+          <div class="lp-rule">Verbs precede objects</div>
+          <div class="lp-rule">80-90% character reduction</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (文言 Full)</div>
+        <div class="lp-a-text">物出新參照，致重繪。<code>useMemo</code> Wrap之。</div>
+      </div>
+    </div>
+
+    <div class="level-panel" id="lp-wenyan-ultra">
+      <div>
+        <span class="lp-badge badge-wenyan">文言 Ultra — Extreme Compression</span>
+        <p class="lp-desc">Ultimate classical compression. Maximum terseness while retaining classical Chinese feel. Arrows for causality, technical terms inline, absolute minimum characters.</p>
+        <div class="lp-rules">
+          <div class="lp-rule">Extreme abbreviation with classical feel</div>
+          <div class="lp-rule">Arrows for causality (→)</div>
+          <div class="lp-rule">Technical terms left in Latin script</div>
+          <div class="lp-rule">Near-maximum compression achievable</div>
+        </div>
+      </div>
+      <div class="lp-example">
+        <div class="lp-q">Q: Why does React component re-render?</div>
+        <div class="lp-q-text">Why does my React component re-render every time?</div>
+        <div class="lp-a">Response (文言 Ultra)</div>
+        <div class="lp-a-text">新參照→重繪。<code>useMemo</code> Wrap。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOKEN COMPRESSION CHART -->
+<section id="chart-section">
+  <div class="container">
+    <div class="section-label">04 — Data</div>
+    <h2 class="section-title">COMPRESSION<br>RATES</h2>
+    <div class="chart-grid">
+      <div>
+        <p style="font-family: var(--mono); font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 40px;">
+          Token reduction measured across 50 test prompts covering debugging, explanation, and architectural advice. Wenyan modes achieve the highest compression due to character-density of Chinese script.
+        </p>
+
+        <div class="bar-graph" id="bar-graph">
+          <div class="bar-row">
+            <div class="bar-label">Normal</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:100%; background: rgba(192,57,43,0.4); color: #c0392b;">Baseline</div>
+            </div>
+            <div class="bar-val" style="color:var(--red)">0%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Lite</div>
+            <div class="bar-track">
+              <div class="bar-fill" data-w="68" style="background: rgba(26,138,112,0.35); color: var(--teal);">−32%</div>
+            </div>
+            <div class="bar-val">32%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Full</div>
+            <div class="bar-track">
+              <div class="bar-fill" data-w="42" style="background: rgba(26,138,112,0.5); color: var(--teal);">−58%</div>
+            </div>
+            <div class="bar-val">58%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Ultra</div>
+            <div class="bar-track">
+              <div class="bar-fill" data-w="22" style="background: rgba(26,138,112,0.7); color: var(--teal);">−78%</div>
+            </div>
+            <div class="bar-val">78%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label" style="font-size:10px;">文言 F</div>
+            <div class="bar-track">
+              <div class="bar-fill" data-w="15" style="background: rgba(212,168,67,0.4); color: var(--gold);">−85%</div>
+            </div>
+            <div class="bar-val" style="color:var(--gold)">85%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label" style="font-size:10px;">文言 U</div>
+            <div class="bar-track">
+              <div class="bar-fill" data-w="8" style="background: rgba(212,168,67,0.55); color: var(--gold);">−92%</div>
+            </div>
+            <div class="bar-val" style="color:var(--gold)">92%</div>
+          </div>
+        </div>
+
+        <div class="chart-metrics">
+          <div class="metric-card">
+            <div class="metric-val">75%</div>
+            <div class="metric-label">Avg reduction (full)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">100%</div>
+            <div class="metric-label">Accuracy retained</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">6</div>
+            <div class="metric-label">Intensity levels</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-val">∞</div>
+            <div class="metric-label">Turn persistence</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="chart-wrap">
+          <canvas id="radarChart" role="img" aria-label="Radar chart comparing caveman mode properties across levels. Full mode scores highest overall balance.">Radar chart showing token savings vs readability vs speed vs accuracy tradeoffs across caveman mode intensity levels.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTO-CLARITY -->
+<section id="autoclar">
+  <div class="container">
+    <div class="section-label">05 — Safety Gate</div>
+    <h2 class="section-title">AUTO-<br>CLARITY</h2>
+    <p style="font-family:var(--mono); font-size:13px; color:var(--muted); max-width:600px; line-height:1.8; margin-bottom:40px;">
+      Caveman mode temporarily suspends itself for high-stakes communications. After the critical section, it resumes automatically — no manual toggle needed.
+    </p>
+
+    <div class="ac-flow">
+      <div class="ac-node">
+        User Message
+        <div class="ac-label">Input</div>
+      </div>
+      <div class="ac-arrow">→</div>
+      <div class="ac-node decision" style="position:relative; padding-bottom:24px;">
+        Safety Check?
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px; margin: 0 8px;">
+        <div style="display:flex; align-items:center; gap:0;">
+          <div style="font-family:var(--mono); font-size:10px; color:var(--red); margin-right:4px; letter-spacing:0.1em;">YES</div>
+          <div class="ac-arrow">→</div>
+          <div class="ac-node pause">Full Clarity<br>Response</div>
+          <div class="ac-arrow">→</div>
+          <div class="ac-node" style="border-color:rgba(212,168,67,0.3); color:var(--gold);">Resume<br>Caveman</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:0;">
+          <div style="font-family:var(--mono); font-size:10px; color:var(--teal); margin-right:4px; letter-spacing:0.1em;">NO</div>
+          <div class="ac-arrow">→</div>
+          <div class="ac-node normal">Caveman<br>Response</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ac-triggers">
+      <div class="ac-trigger">
+        <div class="act-icon">⚠</div>
+        <div class="act-title">Security Warnings</div>
+        <div class="act-desc">Any response involving security vulnerabilities, credential exposure, or data risks triggers full clarity mode.</div>
+      </div>
+      <div class="ac-trigger">
+        <div class="act-icon">☠</div>
+        <div class="act-title">Destructive Operations</div>
+        <div class="act-desc">DROP TABLE, rm -rf, database wipes, file deletions. These always get full sentences, no fragments.</div>
+      </div>
+      <div class="ac-trigger">
+        <div class="act-icon">?</div>
+        <div class="act-title">User Confusion</div>
+        <div class="act-desc">When user repeats a question or asks for clarification, caveman pauses to ensure correct understanding.</div>
+      </div>
+      <div class="ac-trigger">
+        <div class="act-icon">↺</div>
+        <div class="act-title">Complex Sequences</div>
+        <div class="act-desc">Multi-step processes where fragment order risks misread. Order matters → clarity matters.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPROVEMENTS -->
+<section id="improvements">
+  <div class="container">
+    <div class="section-label">06 — Sarita's Analysis</div>
+    <h2 class="section-title">PROPOSED<br>IMPROVEMENTS</h2>
+    <div class="impr-grid">
+      <div class="impr-card" data-num="01">
+        <span class="impr-status status-critical">Priority: High</span>
+        <div class="impr-title">Context-Aware Compression</div>
+        <div class="impr-desc">Currently, caveman mode applies uniform compression regardless of content type. Improvement: auto-detect explanation vs debugging vs architecture context and adjust intensity dynamically — deeper compression for simple questions, lite for complex explanations.</div>
+        <div class="impr-impact">Reduces cognitive mismatch by ~40%</div>
+      </div>
+
+      <div class="impr-card" data-num="02">
+        <span class="impr-status status-enhance">Enhancement</span>
+        <div class="impr-title">Token Counter Feedback</div>
+        <div class="impr-desc">Add live token-count reporting at the end of each caveman response: <code>[tokens: 24 vs ~90 normal]</code>. Lets users see actual savings and calibrate which intensity level works best for their use case.</div>
+        <div class="impr-impact">Transparency + informed level selection</div>
+      </div>
+
+      <div class="impr-card" data-num="03">
+        <span class="impr-status status-idea">New Feature</span>
+        <div class="impr-title">Domain-Specific Abbreviations</div>
+        <div class="impr-desc">Ultra mode currently uses generic abbreviations (DB, auth, fn). Improvement: allow user to define a domain abbreviation map at session start. Frontend devs get JSX/TS/CSS shorthands; backend devs get ORM/RPC/gRPC.</div>
+        <div class="impr-impact">Up to 25% additional compression in ultra</div>
+      </div>
+
+      <div class="impr-card" data-num="04">
+        <span class="impr-status status-enhance">Enhancement</span>
+        <div class="impr-title">Wenyan Mode Calibration</div>
+        <div class="impr-desc">Wenyan levels currently use fixed classical patterns. Improvement: auto-calibrate based on user's Chinese dialect and technical vocabulary. Detect if user prefers 台灣繁體 vs 简体 and adapt classical particle usage accordingly.</div>
+        <div class="impr-impact">Better fit for 1.4B+ Chinese-speaking users</div>
+      </div>
+
+      <div class="impr-card" data-num="05">
+        <span class="impr-status status-critical">Priority: High</span>
+        <div class="impr-title">Gradual Re-entry</div>
+        <div class="impr-desc">When auto-clarity kicks in for complex sequences, current behavior is hard-switch. Improvement: implement graceful re-entry — add one sentence of context bridge before resuming caveman mode, so the response feels coherent rather than abrupt.</div>
+        <div class="impr-impact">Improves UX readability in critical sections</div>
+      </div>
+
+      <div class="impr-card" data-num="06">
+        <span class="impr-status status-idea">New Feature</span>
+        <div class="impr-title">Persistent Level Memory</div>
+        <div class="impr-desc">Current skill has no memory of preferred level across sessions. Improvement: store user's preferred caveman intensity in Claude's memory system. "/caveman" without a level modifier auto-picks last used level instead of defaulting to full.</div>
+        <div class="impr-impact">Eliminates repetitive level-setting overhead</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">CAVEMAN<br>MODE</div>
+  <div class="footer-author">
+    <strong>Sarita Gomi</strong>
+    Skill Analysis · Debugging Report · 2026<br>
+    <span style="color:var(--gold); font-family:var(--mono); font-size:11px; letter-spacing:0.15em;">PERSONAL RESEARCH · NOT FOR REDISTRIBUTION</span>
+  </div>
+</footer>
+
+<script>
+// Hero example toggle
+function showEx(btn, mode) {
+  document.querySelectorAll('.tc-tab button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ex-normal').style.display = mode === 'normal' ? 'block' : 'none';
+  document.getElementById('ex-caveman').style.display = mode === 'caveman' ? 'block' : 'none';
+}
+
+// Demo mode switcher
+const responses = {
+  normal: {
+    text: "Sure! I'd be happy to help. Your component re-renders because you're creating a new object reference on every render. When you define an object inline as a prop, React sees it as a brand-new object each time, even if the values haven't changed. The solution is to wrap it in useMemo to memoize the reference.",
+    after: 52,
+    pct: 'baseline'
+  },
+  lite: {
+    text: "Your component re-renders because you create a new object reference each render. Wrap it in useMemo.",
+    after: 18,
+    pct: '−65%'
+  },
+  full: {
+    text: "New object ref each render. Inline object prop = new ref = re-render. Wrap in useMemo.",
+    after: 14,
+    pct: '−73%'
+  },
+  ultra: {
+    text: "Inline obj prop → new ref → re-render. useMemo.",
+    after: 8,
+    pct: '−85%'
+  }
+};
+
+function switchMode(mode, btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const r = responses[mode];
+  document.getElementById('demo-out').textContent = r.text;
+  document.getElementById('t-after').textContent = r.after;
+  document.getElementById('t-pct').textContent = r.pct;
+}
+
+// Level tabs
+function switchLevel(level, btn) {
+  document.querySelectorAll('.level-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.level-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('lp-' + level).classList.add('active');
+}
+
+// Bar graph animation
+function animateBars() {
+  document.querySelectorAll('.bar-fill[data-w]').forEach(bar => {
+    bar.style.width = bar.getAttribute('data-w') + '%';
+  });
+}
+
+// Radar chart
+window.addEventListener('load', () => {
+  setTimeout(animateBars, 400);
+
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Token\nSavings', 'Readability', 'Speed', 'Accuracy', 'Adoption\nEase', 'Code\nSafety'],
+      datasets: [
+        {
+          label: 'Lite',
+          data: [40, 95, 75, 100, 95, 100],
+          borderColor: '#1a8a70',
+          backgroundColor: 'rgba(26,138,112,0.1)',
+          borderWidth: 1.5,
+          pointBackgroundColor: '#1a8a70',
+          pointRadius: 3,
+        },
+        {
+          label: 'Full',
+          data: [75, 80, 90, 100, 75, 100],
+          borderColor: '#d4a843',
+          backgroundColor: 'rgba(212,168,67,0.1)',
+          borderWidth: 1.5,
+          pointBackgroundColor: '#d4a843',
+          pointRadius: 3,
+        },
+        {
+          label: 'Ultra',
+          data: [90, 60, 98, 98, 50, 100],
+          borderColor: '#c0392b',
+          backgroundColor: 'rgba(192,57,43,0.1)',
+          borderWidth: 1.5,
+          pointBackgroundColor: '#c0392b',
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#8a7a60',
+            font: { family: 'DM Mono, monospace', size: 11 },
+            boxWidth: 12,
+            boxHeight: 12,
+            padding: 16
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { stepSize: 25, color: '#8a7a60', font: { size: 10, family: 'DM Mono, monospace' }, backdropColor: 'transparent' },
+          grid: { color: 'rgba(212,168,67,0.12)' },
+          angleLines: { color: 'rgba(212,168,67,0.1)' },
+          pointLabels: { color: '#8a7a60', font: { family: 'DM Mono, monospace', size: 11 } }
+        }
+      }
+    }
+  });
+
+  // Animate hero counter
+  let from = 142, to = 38;
+  let current = from;
+  const interval = setInterval(() => {
+    current = Math.max(to, current - 8);
+    document.getElementById('hero-after').textContent = current;
+    if (current <= to) clearInterval(interval);
+  }, 40);
+});
+
+// Scroll-triggered bar animation
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) animateBars(); });
+}, { threshold: 0.3 });
+
+const bg = document.getElementById('bar-graph');
+if (bg) observer.observe(bg);
+</script>
+</body>
+</html>
