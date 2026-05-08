@@ -1092,6 +1092,7 @@
     <li><a href="#rules">Rules Engine</a></li>
     <li><a href="#levels">Intensity Levels</a></li>
     <li><a href="#chart-section">Compression</a></li>
+    <li><a href="#dsa">DSA Deep Dive</a></li>
     <li><a href="#improvements">Improvements</a></li>
   </ul>
 </nav>
@@ -1593,10 +1594,470 @@
   </div>
 </section>
 
+<!-- DSA DEEP DIVE -->
+<section id="dsa" style="background:var(--bg2); clip-path:polygon(0 0,100% 40px,100% 100%,0 calc(100% - 40px)); padding:140px 0;">
+<div class="container">
+<div class="section-label">06 — DSA Analysis</div>
+<h2 class="section-title">ALGORITHMS<br>INSIDE</h2>
+<p style="font-family:var(--mono);font-size:13px;color:var(--muted);max-width:720px;line-height:1.9;margin-bottom:72px;">
+  Under the hood, Caveman Mode is a pipeline of classic computer science primitives chained together. Here's every algorithm and data structure it relies on — with complexity, visual structure, and interactive demos.
+</p>
+
+<!-- ═══ 1. HASH SET ═══ -->
+<div style="margin-bottom:100px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;">
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Algorithm 01</div>
+      <div style="font-family:var(--display);font-size:52px;letter-spacing:0.06em;color:var(--bone);line-height:1;margin-bottom:20px;">HASH SET<br><span style="color:var(--gold);font-size:32px;">Filler Word Lookup</span></div>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+        Every word in the input is looked up in a pre-built HashSet of ~120 "killable" words (articles, fillers, pleasantries). HashSet gives <strong style="color:var(--gold)">O(1)</strong> average lookup per word — critical since every token passes through this gate.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--teal);">O(1)</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Lookup</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--teal);">O(n)</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Space</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--gold);">~120</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Entries</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.12);padding:18px;border-radius:2px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;">
+        <span style="color:var(--gold);">// Pseudocode</span><br>
+        fillerSet = Set{<span style="color:var(--bone);">"a","an","the","just","really","sure",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"basically","actually","happy","certainly"...</span>}<br><br>
+        <span style="color:var(--gold);">for</span> word <span style="color:var(--gold);">in</span> tokens:<br>
+        &nbsp;&nbsp;<span style="color:var(--gold);">if</span> word.lower() <span style="color:var(--gold);">in</span> fillerSet:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;drop(word) <span style="color:var(--muted);">// O(1)</span>
+      </div>
+    </div>
+
+    <!-- Hash table visual -->
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Interactive Hash Table — click a word to trace it</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;" id="hash-words">
+        <button onclick="traceHash(this,'a')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.06);color:var(--red);padding:5px 12px;border-radius:2px;cursor:pointer;">a</button>
+        <button onclick="traceHash(this,'the')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.06);color:var(--red);padding:5px 12px;border-radius:2px;cursor:pointer;">the</button>
+        <button onclick="traceHash(this,'just')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.06);color:var(--red);padding:5px 12px;border-radius:2px;cursor:pointer;">just</button>
+        <button onclick="traceHash(this,'sure')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.06);color:var(--red);padding:5px 12px;border-radius:2px;cursor:pointer;">sure</button>
+        <button onclick="traceHash(this,'bug')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(26,138,112,0.4);background:rgba(26,138,112,0.06);color:var(--teal);padding:5px 12px;border-radius:2px;cursor:pointer;">bug</button>
+        <button onclick="traceHash(this,'useMemo')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(26,138,112,0.4);background:rgba(26,138,112,0.06);color:var(--teal);padding:5px 12px;border-radius:2px;cursor:pointer;">useMemo</button>
+        <button onclick="traceHash(this,'really')" style="font-family:var(--mono);font-size:11px;border:1px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.06);color:var(--red);padding:5px 12px;border-radius:2px;cursor:pointer;">really</button>
+      </div>
+
+      <svg width="100%" viewBox="0 0 520 280" id="hash-svg" style="background:var(--bg3);border:1px solid rgba(212,168,67,0.1);border-radius:2px;">
+        <!-- Buckets 0-7 -->
+        <text x="20" y="22" font-family="DM Mono,monospace" font-size="10" fill="#8a7a60" letter-spacing="2">BUCKET</text>
+        <text x="110" y="22" font-family="DM Mono,monospace" font-size="10" fill="#8a7a60" letter-spacing="2">STORED WORDS</text>
+        <text x="380" y="22" font-family="DM Mono,monospace" font-size="10" fill="#8a7a60" letter-spacing="2">STATUS</text>
+
+        <g id="bucket-0"><rect x="10" y="30" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="48" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">0</text><rect x="70" y="30" width="290" height="28" rx="2" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="0.5"/><text x="80" y="48" font-family="DM Mono,monospace" font-size="11" fill="#c0392b">"a", "an"</text></g>
+        <g id="bucket-1"><rect x="10" y="62" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="80" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">1</text><rect x="70" y="62" width="290" height="28" rx="2" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="0.5"/><text x="80" y="80" font-family="DM Mono,monospace" font-size="11" fill="#c0392b">"just", "sure", "really"</text></g>
+        <g id="bucket-2"><rect x="10" y="94" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="112" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">2</text><rect x="70" y="94" width="290" height="28" rx="2" fill="rgba(26,138,112,0.04)" stroke="rgba(26,138,112,0.15)" stroke-width="0.5"/><text x="80" y="112" font-family="DM Mono,monospace" font-size="11" fill="#1a8a70">"useMemo", "useState"</text></g>
+        <g id="bucket-3"><rect x="10" y="126" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="144" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">3</text><rect x="70" y="126" width="290" height="28" rx="2" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="0.5"/><text x="80" y="144" font-family="DM Mono,monospace" font-size="11" fill="#c0392b">"the", "certainly"</text></g>
+        <g id="bucket-4"><rect x="10" y="158" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="176" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">4</text><rect x="70" y="158" width="290" height="28" rx="2" fill="rgba(26,138,112,0.04)" stroke="rgba(26,138,112,0.15)" stroke-width="0.5"/><text x="80" y="176" font-family="DM Mono,monospace" font-size="11" fill="#1a8a70">"bug", "error", "null"</text></g>
+        <g id="bucket-5"><rect x="10" y="190" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="208" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">5</text><rect x="70" y="190" width="290" height="28" rx="2" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="0.5"/><text x="80" y="208" font-family="DM Mono,monospace" font-size="11" fill="#c0392b">"basically", "actually"</text></g>
+        <g id="bucket-6"><rect x="10" y="222" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="240" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">6</text><rect x="70" y="222" width="290" height="28" rx="2" fill="rgba(26,138,112,0.04)" stroke="rgba(26,138,112,0.15)" stroke-width="0.5"/><text x="80" y="240" font-family="DM Mono,monospace" font-size="11" fill="#1a8a70">"auth", "token", "cache"</text></g>
+        <g id="bucket-7"><rect x="10" y="254" width="50" height="28" rx="2" fill="none" stroke="rgba(212,168,67,0.2)" stroke-width="0.5"/><text x="35" y="272" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#8a7a60">7</text><rect x="70" y="254" width="290" height="28" rx="2" fill="rgba(192,57,43,0.06)" stroke="rgba(192,57,43,0.2)" stroke-width="0.5"/><text x="80" y="272" font-family="DM Mono,monospace" font-size="11" fill="#c0392b">"happy", "of course"</text></g>
+
+        <!-- hash probe arrow (hidden by default) -->
+        <g id="hash-probe" opacity="0">
+          <rect id="probe-highlight" x="10" y="30" width="360" height="28" rx="2" fill="rgba(212,168,67,0.15)" stroke="var(--gold)" stroke-width="1.5"/>
+        </g>
+        <!-- status column -->
+        <text id="hash-status" x="390" y="150" font-family="DM Mono,monospace" font-size="11" fill="#d4a843" text-anchor="middle">← click a word</text>
+      </svg>
+      <div id="hash-result" style="margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--muted);padding:12px;background:var(--bg3);border:1px solid rgba(212,168,67,0.1);border-radius:2px;min-height:40px;">
+        Select a word above to trace its hash lookup path through the table.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 2. TRIE ═══ -->
+<div style="margin-bottom:100px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;">
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Algorithm 02</div>
+      <div style="font-family:var(--display);font-size:52px;letter-spacing:0.06em;color:var(--bone);line-height:1;margin-bottom:20px;">TRIE<br><span style="color:var(--gold);font-size:32px;">Prefix Pattern Match</span></div>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+        Pleasantry phrases like "of course", "happy to", "I'd be happy" share prefixes. A Trie (prefix tree) lets caveman detect multi-word filler phrases in one character-by-character traversal — much faster than checking every phrase independently.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--teal);">O(m)</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Search (m=len)</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--teal);">O(α·n)</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Space</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:16px;border-radius:2px;text-align:center;">
+          <div style="font-family:var(--display);font-size:28px;color:var(--gold);">1 pass</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">All prefixes</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.12);padding:18px;border-radius:2px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;">
+        <span style="color:var(--gold);">// Trie traversal</span><br>
+        node = root<br>
+        <span style="color:var(--gold);">for</span> char <span style="color:var(--gold);">in</span> phrase:<br>
+        &nbsp;&nbsp;<span style="color:var(--gold);">if</span> char <span style="color:var(--gold);">not in</span> node.children:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gold);">return</span> <span style="color:var(--red);">NOT_FOUND</span><br>
+        &nbsp;&nbsp;node = node.children[char]<br>
+        <span style="color:var(--gold);">return</span> node.is_end <span style="color:var(--muted);">// True=killable</span>
+      </div>
+    </div>
+
+    <!-- Trie visual -->
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Trie — pleasantry phrases — click nodes to explore</div>
+      <svg width="100%" viewBox="0 0 520 340" style="background:var(--bg3);border:1px solid rgba(212,168,67,0.1);border-radius:2px;">
+        <defs>
+          <marker id="tarr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8a7a60" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <!-- ROOT -->
+        <g id="trie-root" style="cursor:pointer" onclick="trieClick('root')">
+          <circle cx="260" cy="30" r="16" fill="rgba(212,168,67,0.15)" stroke="var(--gold)" stroke-width="1"/>
+          <text x="260" y="35" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#d4a843">ROOT</text>
+        </g>
+
+        <!-- Level 1: h, o, s, b, c, j -->
+        <line x1="260" y1="46" x2="80" y2="84" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <line x1="260" y1="46" x2="180" y2="84" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <line x1="260" y1="46" x2="260" y2="84" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <line x1="260" y1="46" x2="340" y2="84" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <line x1="260" y1="46" x2="420" y2="84" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+
+        <g onclick="trieClick('h')" style="cursor:pointer"><circle cx="80" cy="100" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5" id="tc-h"/><text x="80" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">h</text></g>
+        <g onclick="trieClick('o')" style="cursor:pointer"><circle cx="180" cy="100" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="180" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">o</text></g>
+        <g onclick="trieClick('s')" style="cursor:pointer"><circle cx="260" cy="100" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="260" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">s</text></g>
+        <g onclick="trieClick('b')" style="cursor:pointer"><circle cx="340" cy="100" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="340" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">b</text></g>
+        <g onclick="trieClick('c')" style="cursor:pointer"><circle cx="420" cy="100" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="420" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">c</text></g>
+
+        <!-- edge labels level 1 -->
+        <text x="152" y="74" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'h'</text>
+        <text x="205" y="74" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'o'</text>
+        <text x="254" y="74" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'s'</text>
+        <text x="302" y="74" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'b'</text>
+        <text x="370" y="74" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'c'</text>
+
+        <!-- Level 2 under h: a(happy), e(hedging) -->
+        <line x1="80" y1="114" x2="50" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <line x1="80" y1="114" x2="110" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('ha')" style="cursor:pointer"><circle cx="50" cy="170" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="50" y="175" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">a</text></g>
+        <g onclick="trieClick('he')" style="cursor:pointer"><circle cx="110" cy="170" r="14" fill="rgba(192,57,43,0.1)" stroke="rgba(192,57,43,0.5)" stroke-width="0.5"/><text x="110" y="175" text-anchor="middle" font-family="DM Mono,monospace" font-size="12" fill="#c0392b">e</text></g>
+        <text x="26" y="144" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'a'</text>
+        <text x="102" y="144" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">'e'</text>
+
+        <!-- "happy" terminal -->
+        <line x1="50" y1="184" x2="50" y2="224" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('happy')" style="cursor:pointer">
+          <rect x="14" y="226" width="72" height="24" rx="2" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="1"/>
+          <text x="50" y="242" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#c0392b">happy✓</text>
+        </g>
+
+        <!-- "of course" under o -->
+        <line x1="180" y1="114" x2="180" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('of')" style="cursor:pointer">
+          <rect x="148" y="156" width="64" height="24" rx="2" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="1"/>
+          <text x="180" y="172" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#c0392b">of crs✓</text>
+        </g>
+
+        <!-- "sure" under s -->
+        <line x1="260" y1="114" x2="260" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('sure')" style="cursor:pointer">
+          <rect x="225" y="156" width="70" height="24" rx="2" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="1"/>
+          <text x="260" y="172" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#c0392b">sure✓</text>
+        </g>
+
+        <!-- "basically" under b -->
+        <line x1="340" y1="114" x2="340" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('basically')" style="cursor:pointer">
+          <rect x="298" y="156" width="84" height="24" rx="2" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="1"/>
+          <text x="340" y="172" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#c0392b">basically✓</text>
+        </g>
+
+        <!-- "certainly" under c -->
+        <line x1="420" y1="114" x2="420" y2="154" stroke="#8a7a60" stroke-width="0.5" marker-end="url(#tarr)"/>
+        <g onclick="trieClick('cert')" style="cursor:pointer">
+          <rect x="378" y="156" width="84" height="24" rx="2" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="1"/>
+          <text x="420" y="172" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#c0392b">certainly✓</text>
+        </g>
+
+        <!-- legend -->
+        <rect x="10" y="290" width="12" height="12" rx="1" fill="rgba(192,57,43,0.2)" stroke="var(--red)" stroke-width="0.5"/>
+        <text x="26" y="302" font-family="DM Mono,monospace" font-size="10" fill="#8a7a60">Terminal node (phrase complete = KILL)</text>
+        <rect x="10" y="308" width="12" height="12" rx="6" fill="rgba(212,168,67,0.15)" stroke="var(--gold)" stroke-width="0.5"/>
+        <text x="26" y="320" font-family="DM Mono,monospace" font-size="10" fill="#8a7a60">Internal node (prefix match, continue)</text>
+        <text id="trie-info" x="260" y="305" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#d4a843"></text>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. FSM ═══ -->
+<div style="margin-bottom:100px;">
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Algorithm 03</div>
+  <div style="font-family:var(--display);font-size:52px;letter-spacing:0.06em;color:var(--bone);line-height:1;margin-bottom:20px;">FINITE STATE<br><span style="color:var(--gold);font-size:32px;">MACHINE — Mode Control</span></div>
+  <p style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;max-width:700px;margin-bottom:40px;">
+    Caveman Mode is fundamentally a 4-state FSM. Every incoming message is an event that may trigger a state transition. The FSM determines which response transformer is applied. Click any state to simulate a transition.
+  </p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;">
+    <div>
+      <!-- FSM Diagram -->
+      <svg width="100%" viewBox="0 0 480 400" style="background:var(--bg3);border:1px solid rgba(212,168,67,0.1);border-radius:2px;overflow:visible;">
+        <defs>
+          <marker id="farr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8a7a60" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+          <marker id="garr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#d4a843" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+
+        <!-- State: NORMAL -->
+        <g id="fsm-normal" onclick="fsmClick('normal')" style="cursor:pointer;">
+          <circle cx="120" cy="100" r="46" fill="rgba(26,138,112,0.08)" stroke="rgba(26,138,112,0.5)" stroke-width="1.5" id="fsm-s-normal"/>
+          <text x="120" y="94" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="14" fill="#1a8a70" letter-spacing="1">NORMAL</text>
+          <text x="120" y="112" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">full prose</text>
+        </g>
+
+        <!-- State: CAVEMAN -->
+        <g id="fsm-caveman" onclick="fsmClick('caveman')" style="cursor:pointer;">
+          <circle cx="360" cy="100" r="46" fill="rgba(212,168,67,0.08)" stroke="rgba(212,168,67,0.6)" stroke-width="1.5" id="fsm-s-caveman"/>
+          <text x="360" y="94" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="14" fill="#d4a843" letter-spacing="1">CAVEMAN</text>
+          <text x="360" y="112" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">compressed</text>
+        </g>
+
+        <!-- State: AUTO_CLARITY -->
+        <g id="fsm-clarity" onclick="fsmClick('clarity')" style="cursor:pointer;">
+          <circle cx="360" cy="290" r="46" fill="rgba(192,57,43,0.08)" stroke="rgba(192,57,43,0.5)" stroke-width="1.5" id="fsm-s-clarity"/>
+          <text x="360" y="282" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="#c0392b" letter-spacing="1">AUTO</text>
+          <text x="360" y="298" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="#c0392b" letter-spacing="1">CLARITY</text>
+          <text x="360" y="314" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">full prose</text>
+        </g>
+
+        <!-- State: LEVEL_SELECT -->
+        <g id="fsm-level" onclick="fsmClick('level')" style="cursor:pointer;">
+          <circle cx="120" cy="290" r="46" fill="rgba(212,168,67,0.05)" stroke="rgba(212,168,67,0.35)" stroke-width="1" stroke-dasharray="4 3" id="fsm-s-level"/>
+          <text x="120" y="284" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="#8a7a60" letter-spacing="1">LEVEL</text>
+          <text x="120" y="300" text-anchor="middle" font-family="Bebas Neue,sans-serif" font-size="12" fill="#8a7a60" letter-spacing="1">SELECT</text>
+          <text x="120" y="316" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">lite/full/ultra</text>
+        </g>
+
+        <!-- Transitions -->
+        <!-- NORMAL → CAVEMAN: trigger keyword -->
+        <path d="M166 85 Q240 50 314 85" fill="none" stroke="#d4a843" stroke-width="1" marker-end="url(#garr)"/>
+        <text x="240" y="52" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#d4a843">/caveman</text>
+
+        <!-- CAVEMAN → NORMAL: stop caveman -->
+        <path d="M314 115 Q240 150 166 115" fill="none" stroke="#8a7a60" stroke-width="1" marker-end="url(#farr)"/>
+        <text x="240" y="148" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">stop caveman</text>
+
+        <!-- CAVEMAN → AUTO_CLARITY: safety trigger -->
+        <path d="M374 146 L374 244" fill="none" stroke="var(--red)" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#farr)"/>
+        <text x="400" y="198" font-family="DM Mono,monospace" font-size="9" fill="#c0392b">danger</text>
+
+        <!-- AUTO_CLARITY → CAVEMAN: resume -->
+        <path d="M346 244 L346 146" fill="none" stroke="#d4a843" stroke-width="1" marker-end="url(#garr)"/>
+        <text x="310" y="198" font-family="DM Mono,monospace" font-size="9" fill="#d4a843">resume</text>
+
+        <!-- CAVEMAN → LEVEL_SELECT: /caveman lite|full|ultra -->
+        <path d="M316 118 Q200 200 166 262" fill="none" stroke="#d4a843" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#garr)"/>
+        <text x="210" y="204" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#d4a843">/caveman lite</text>
+
+        <!-- LEVEL_SELECT → CAVEMAN loop -->
+        <path d="M166 278 Q240 240 314 278" fill="none" stroke="#8a7a60" stroke-width="1" marker-end="url(#farr)"/>
+        <text x="240" y="260" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#8a7a60">set + persist</text>
+
+        <!-- current state indicator -->
+        <text id="fsm-cur" x="240" y="385" text-anchor="middle" font-family="DM Mono,monospace" font-size="11" fill="#d4a843">← click a state node</text>
+      </svg>
+    </div>
+
+    <!-- FSM transition table -->
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">State Transition Table</div>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(212,168,67,0.3);">
+            <th style="text-align:left;padding:8px 10px;color:var(--gold);font-weight:400;letter-spacing:0.1em;">Current State</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--gold);font-weight:400;letter-spacing:0.1em;">Event</th>
+            <th style="text-align:left;padding:8px 10px;color:var(--gold);font-weight:400;letter-spacing:0.1em;">Next State</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--teal);">NORMAL</td>
+            <td style="padding:8px 10px;color:var(--muted);">/caveman</td>
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN(full)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--teal);">NORMAL</td>
+            <td style="padding:8px 10px;color:var(--muted);">"less tokens"</td>
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN(full)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN</td>
+            <td style="padding:8px 10px;color:var(--muted);">safety trigger</td>
+            <td style="padding:8px 10px;color:var(--red);">AUTO_CLARITY</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--red);">AUTO_CLARITY</td>
+            <td style="padding:8px 10px;color:var(--muted);">response sent</td>
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN</td>
+            <td style="padding:8px 10px;color:var(--muted);">/caveman lite</td>
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN(lite)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+            <td style="padding:8px 10px;color:var(--gold);">CAVEMAN</td>
+            <td style="padding:8px 10px;color:var(--muted);">stop caveman</td>
+            <td style="padding:8px 10px;color:var(--teal);">NORMAL</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;color:var(--teal);">NORMAL</td>
+            <td style="padding:8px 10px;color:var(--muted);">any other msg</td>
+            <td style="padding:8px 10px;color:var(--teal);">NORMAL</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:24px;background:var(--bg3);border:1px solid rgba(212,168,67,0.12);padding:18px;border-radius:2px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;">
+        <span style="color:var(--gold);">// FSM implementation</span><br>
+        state = <span style="color:var(--teal);">NORMAL</span><br>
+        level = <span style="color:var(--gold);">FULL</span><br><br>
+        <span style="color:var(--gold);">def</span> transition(event):<br>
+        &nbsp;&nbsp;<span style="color:var(--gold);">match</span> (state, event):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;(NORMAL, <span style="color:var(--bone);">TRIGGER</span>) → state=<span style="color:var(--gold);">CAVEMAN</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;(CAVEMAN, <span style="color:var(--bone);">DANGER</span>) → state=<span style="color:var(--red);">CLARITY</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;(CLARITY, <span style="color:var(--bone);">DONE</span>) → state=<span style="color:var(--gold);">CAVEMAN</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 4. GREEDY ALGORITHM ═══ -->
+<div style="margin-bottom:100px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;">
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Algorithm 04</div>
+      <div style="font-family:var(--display);font-size:52px;letter-spacing:0.06em;color:var(--bone);line-height:1;margin-bottom:20px;">GREEDY<br><span style="color:var(--gold);font-size:32px;">Word Priority Scoring</span></div>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+        Caveman uses a greedy approach to word elimination — assign each word a "redundancy score" then drop highest-redundancy words first until the target compression level is met. Greedy is optimal here because word drops are independent events.
+      </p>
+      <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.12);padding:18px;border-radius:2px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:20px;">
+        <span style="color:var(--gold);">// Redundancy score</span><br>
+        score(word) =<br>
+        &nbsp;&nbsp;(0.5 × is_article) +<br>
+        &nbsp;&nbsp;(1.0 × is_filler) +<br>
+        &nbsp;&nbsp;(1.5 × is_pleasantry) +<br>
+        &nbsp;&nbsp;(2.0 × is_hedge_phrase)<br><br>
+        <span style="color:var(--gold);">// Drop greedily, highest score first</span><br>
+        words.sort(key=score, reverse=<span style="color:var(--teal);">True</span>)<br>
+        drop until token_budget met
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:14px;border-radius:2px;">
+          <div style="font-family:var(--display);font-size:24px;color:var(--teal);">O(n log n)</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">Sort cost</div>
+        </div>
+        <div style="background:var(--bg3);border:1px solid rgba(212,168,67,0.18);padding:14px;border-radius:2px;">
+          <div style="font-family:var(--display);font-size:24px;color:var(--gold);">Optimal</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:4px;">For indep. drops</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Greedy chart -->
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Word redundancy scores — sorted descending</div>
+      <div style="position:relative;height:260px;"><canvas id="greedyChart" role="img" aria-label="Bar chart showing redundancy scores for different word types. Hedging phrases score highest at 2.0, pleasantries 1.5, filler 1.0, articles 0.5, technical terms 0.">Redundancy scores: Hedge Phrase=2.0, Pleasantry=1.5, Filler=1.0, Article=0.5, Tech Term=0.</canvas></div>
+      <div style="margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;padding:12px;background:var(--bg3);border:1px solid rgba(212,168,67,0.1);border-radius:2px;">
+        <span style="color:var(--teal);">Lite mode:</span> drops score ≥ 1.5 (pleasantries + hedges)<br>
+        <span style="color:var(--gold);">Full mode:</span> drops score ≥ 0.5 (all filler + articles)<br>
+        <span style="color:var(--red);">Ultra mode:</span> drops score ≥ 0 + abbreviates tech terms
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 5. COMPLEXITY COMPARISON ═══ -->
+<div style="margin-bottom:40px;">
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:12px;">Algorithm 05</div>
+  <div style="font-family:var(--display);font-size:52px;letter-spacing:0.06em;color:var(--bone);line-height:1;margin-bottom:40px;">COMPLEXITY<br><span style="color:var(--gold);font-size:32px;">Full Pipeline Analysis</span></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;">
+    <div>
+      <div style="position:relative;height:320px;"><canvas id="complexityChart" role="img" aria-label="Horizontal bar chart comparing time complexity of algorithms used in Caveman Mode.">Algorithm complexity comparison chart.</canvas></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Full Pipeline — Per Message</div>
+      <div id="cplx-table">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;border-bottom:1px solid rgba(212,168,67,0.2);padding-bottom:8px;margin-bottom:8px;">
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Step</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Time</span>
+          <span style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);">Space</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">Tokenization</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--teal);">O(n)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(n)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">HashSet lookup</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--teal);">O(1) each</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(k)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">Trie search</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--teal);">O(m)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(α·n)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">Greedy sort</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--gold);">O(n log n)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(n)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">FSM transition</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--teal);">O(1)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(states)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">Synonym replace</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--teal);">O(n)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--muted);">O(n)</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0;padding:10px 0;background:rgba(212,168,67,0.05);border-top:1px solid rgba(212,168,67,0.2);margin-top:4px;">
+          <span style="font-family:var(--sans);font-weight:700;font-size:12px;color:var(--bone);">Total pipeline</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--gold);">O(n log n)</span>
+          <span style="font-family:var(--mono);font-size:12px;color:var(--gold);">O(n)</span>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;">
+        n = tokens in message · m = phrase length · k = filler set size · α = alphabet size
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</section>
+
 <!-- IMPROVEMENTS -->
 <section id="improvements">
   <div class="container">
-    <div class="section-label">06 — Sarita's Analysis</div>
+    <div class="section-label">07 — Sarita's Analysis</div>
     <h2 class="section-title">PROPOSED<br>IMPROVEMENTS</h2>
     <div class="impr-grid">
       <div class="impr-card" data-num="01">
